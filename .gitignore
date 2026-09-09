@@ -1,0 +1,11 @@
+# binaries
+/caskdemo
+/caskade
+
+# local data directories
+/data/
+*.db
+*.hint
+
+# macOS
+.DS_Store
