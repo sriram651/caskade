@@ -5,10 +5,16 @@ about to happen next. This is the first file to read on the way back in.
 
 ---
 
-**9 Sep 2026**
-Landed: scaffold, renamed to `caskade`, and chunk **0.1** — `go.mod` at
-`github.com/sriram651/caskade`, `cmd/caskdemo` printing a version string.
-`go build ./...`, `go vet`, `gofmt -l` all green. Committed and pushed.
-Next: chunk **0.2** — a reading chunk, no Go. Answer paper questions 1
-("why append-only?") and 3 ("how do you delete in a file you can't edit?")
-in `docs/paper-notes.md`. Prose, badly, doesn't need to be right.
+**10 Sep 2026**
+Landed: chunk **0.2** — paper questions **1** and **3** answered in prose in
+`docs/paper-notes.md`. Questions **2, 4 and 5** were also attempted, ahead of
+reading pages 4–7; each carries a `_provisional_` marker and is to be **redone
+from scratch in 0.6**, not trusted or edited. Also a docs-sync commit for 0.1
+(`PLAN.md` status, a dead `NOTES.md` line, the `var`-not-`const` reasoning
+moved into `docs/decisions.md`). No Go touched; build/vet/gofmt still green.
+Next: chunk **0.3** — the first real Go of the project. A struct with both an
+exported and an unexported field, a constructor function, and one method on a
+pointer receiver. Exit criterion: **one test asserts one field after
+construction**. One field, one assertion — that is the whole chunk.
+Unfamiliar bits (pointer vs. value receivers, why a constructor rather than a
+literal, `_test.go` naming) are `cask-coach` questions, not blockers.

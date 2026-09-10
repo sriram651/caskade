@@ -16,3 +16,9 @@ date        mins  what          detail
                                 caskdemo prints version, build/vet/fmt green).
                                 Setup day, over the ceiling. Minutes are
                                 wall-clock — correct if it's off.
+2026-09-10  35m   0.2 + docs   Paper Qs 1 and 3 answered in own prose — exit
+                                criterion met. Qs 2/4/5 also attempted, out of
+                                scope, each marked provisional to redo in 0.6.
+                                Docs-sync commit for 0.1. No Go touched. 35m is
+                                wall-clock "with a lot of distractions" — under
+                                the ceiling, attention was less than the number.
