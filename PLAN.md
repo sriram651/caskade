@@ -1,7 +1,7 @@
 # caskade — a Bitcask-style key/value store in Go
 
-**Status:** scaffolded, no code yet. Reading phase.
-**Last updated:** 9 Sep 2026
+**Status:** Phase 0 in progress. Chunk 0.1 landed; the tree builds.
+**Last updated:** 10 Sep 2026
 
 A plan plus a session handover, written so it is cheap to pick up after a gap.
 Read **Where I am** and **Next chunk** first — the rest is reference.
@@ -66,7 +66,8 @@ one follows you back into actual work. Save Phase 7 for real sittings.
   with a proper break). Normal pace; the middle of the paper is diagram-heavy
   and slower by nature, so expect the reading chunks to cover less ground there.
 - **9 Sep 2026** — project scaffolded, four agents written, chunk list below.
-  No Go written yet.
+  Chunk **0.1** landed the same day: `go.mod`, `cmd/caskdemo` printing a
+  version, `go build ./...` / `go vet` / `gofmt -l` all green.
 
 Open question still being chewed on: **why does keeping every key in RAM put a
 ceiling on this design?**
@@ -235,7 +236,8 @@ lands.
 
 ## Next chunk
 
-**0.1** — `go mod init github.com/sriram651/caskade`, add `cmd/caskdemo/main.go`
-printing a version string, get `go build ./...` green, commit.
+**0.2** — a reading chunk, no Go. Answer paper questions **1** ("why
+append-only?") and **3** ("how do you delete in a file you cannot edit?") in
+`docs/paper-notes.md`. Prose, in your own words, allowed to be wrong.
 
-Then 0.2. One per day. Ask `cask-lead` for it if the list above is not enough.
+Then 0.3. One per day. Ask `cask-lead` for it if the list above is not enough.

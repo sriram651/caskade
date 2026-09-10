@@ -6,8 +6,9 @@ about to happen next. This is the first file to read on the way back in.
 ---
 
 **9 Sep 2026**
-Landed: project scaffolded — `PLAN.md`, `LOG.md`, four agents under
-`.claude/agents/`, and a hook that makes the no-Go-from-Claude rule structural.
-No Go written yet.
-Next: chunk **0.1** — `go mod init github.com/sriram651/caskade`, a `cmd/caskdemo`
-that prints a version string, `go build ./...` green, commit.
+Landed: scaffold, renamed to `caskade`, and chunk **0.1** — `go.mod` at
+`github.com/sriram651/caskade`, `cmd/caskdemo` printing a version string.
+`go build ./...`, `go vet`, `gofmt -l` all green. Committed and pushed.
+Next: chunk **0.2** — a reading chunk, no Go. Answer paper questions 1
+("why append-only?") and 3 ("how do you delete in a file you can't edit?")
+in `docs/paper-notes.md`. Prose, badly, doesn't need to be right.

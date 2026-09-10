@@ -12,4 +12,7 @@ Floor: 15 minutes, every day. Reading counts. Writing a note counts.
 date        mins  what          detail
 ```
 
-2026-09-09  --    scaffold      plan, agents and log set up (no Go yet)
+2026-09-09  ~55m  setup + 0.1   scaffold + rename to caskade + chunk 0.1 (go.mod,
+                                caskdemo prints version, build/vet/fmt green).
+                                Setup day, over the ceiling. Minutes are
+                                wall-clock — correct if it's off.

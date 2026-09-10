@@ -10,4 +10,5 @@ file is that a decision settled in August is not reopened in November.
 | 2026-09-09 | Daily 15-minute floor, 45-minute weekday ceiling | Same ~3h/week as before, spread out. Daily keeps re-entry cost near zero; short keeps daily survivable |
 | 2026-09-09 | Chunk list detailed only for Phases 0–2 | Later phases get written when the real pace is known, not guessed |
 | 2026-09-09 | Named `caskade`, module `github.com/sriram651/caskade` | Reads as a named project rather than an exercise. Keeps the Bitcask barrel metaphor: writes cascade down an append-only cask. Agents renamed `cask-*` to match |
+| 2026-09-09 | `Version` in `cmd/caskdemo` is a `var`, not a `const` | Deliberate: a `const` cannot be stamped at build time, a `var` can, via `go build -ldflags "-X main.Version=..."`. Name is MixedCaps per Go convention, not `VERSION` |
 | 2026-09-09 | The Aug 2026 plan file was folded into `PLAN.md` and deleted, not archived | It was ~95% duplicate, and its pacing rules ("~3h/week, not a floor to beat", "no streaks, the project waits") now contradict the daily floor. A superseded instruction sitting in the repo is worse than no record |
