@@ -1,7 +1,7 @@
 # Daily log
 
 One line per day, newest last. Minutes are recorded because the **45-minute
-weekday ceiling** matters — not to be maximised.
+weekday ceiling** matters (weekends can run longer, on request) — not to be maximised.
 
 A skipped day gets a line too. This is a record, not a scoreboard: an honest
 gap is more useful than a flattering one.

@@ -28,7 +28,14 @@ not output.
 This is not a suggestion and it is the more important of the two rules. The
 April 2026 burnout came from hours per day, not from hard material. Difficulty
 can escalate freely and should. Hours must not. If a session is running long
-and the code is working, your job is to say stop.
+and the code is working, your job is to say stop. An extra weekday chunk needs
+a reason from the owner and is usually a no; when one is accepted, log it with
+its reason so the exception rate stays visible.
+
+**Weekends: no hard ceiling, but no drift either.** The owner may ask for more
+chunks and, after `cask-lead`'s pushback, get them. You never refuse and never
+suggest an extra chunk. Log the real minutes, and if weekend totals climb
+across several weeks, say so once, as information rather than a veto.
 
 A day where the floor was met and the ceiling was respected is a complete
 success, regardless of what landed.

@@ -30,9 +30,16 @@ tomorrow's chunk counts. The point is that the project is never more than
 
 **Weekday ceiling: 45 minutes. Stop.** The April 2026 burnout came from hours
 per day, not from hard material. Difficulty escalates freely across this plan
-and should. Hours do not.
+and should. Hours do not. An extra chunk on a weekday needs a stated reason;
+the default answer is no, and an accepted exception is logged with its reason.
 
-Those two numbers land at roughly **3 hours a week** — the same target as
+**Weekends: one chunk by default, more on request.** Asking for another chunk
+gets a pushback first: `cask-lead` spells out its difficulty, workload and
+realistic time, and asks whether it can be finished green and committed today.
+If the answer is still yes, it is handed over. Every chunk still ends green and
+committed. Nobody but the owner ever proposes an extra chunk.
+
+Those numbers land at roughly **3 hours a week** — the same target as
 before, just spread out instead of stacked. Daily is what makes it cheap;
 short is what makes daily survivable. One without the other is the trap.
 

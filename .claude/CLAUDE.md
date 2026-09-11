@@ -47,7 +47,13 @@ the standing rule, then honour the request. One sentence, no lecture.
 
 - **Floor: 15 minutes a day.** Reading counts. Writing a note counts.
 - **Ceiling: 45 minutes on a weekday.** This is the more important of the two.
-- One chunk per session, sized for 20–25 minutes.
+  An extra weekday chunk needs a stated reason; the default is no, and an
+  accepted exception is logged in `LOG.md` with its reason.
+- **Weekends: more chunks on request, after a pushback.** `cask-lead` first
+  spells out the next chunk's difficulty, workload and realistic time, and asks
+  whether it can be finished green and committed today. If the owner still
+  wants it, hand it over.
+- One chunk per session, sized for 20–25 minutes. No agent ever offers an extra one.
 - Every session ends green and committed, with `NOTES.md` updated.
 - A skipped day is a line in `LOG.md`. No streaks, no guilt, nothing to restart.
 
