@@ -1,7 +1,7 @@
 # caskade — a Bitcask-style key/value store in Go
 
-**Status:** Phase 0 in progress. Chunk 0.1 landed; the tree builds.
-**Last updated:** 10 Sep 2026
+**Status:** Phase 0 in progress. Chunks 0.1–0.3 landed; the tree builds and tests pass.
+**Last updated:** 11 Sep 2026
 
 A plan plus a session handover, written so it is cheap to pick up after a gap.
 Read **Where I am** and **Next chunk** first — the rest is reference.
@@ -68,6 +68,14 @@ one follows you back into actual work. Save Phase 7 for real sittings.
 - **9 Sep 2026** — project scaffolded, four agents written, chunk list below.
   Chunk **0.1** landed the same day: `go.mod`, `cmd/caskdemo` printing a
   version, `go build ./...` / `go vet` / `gofmt -l` all green.
+- **10 Sep 2026** — chunk **0.2** landed: paper questions 1 and 3 answered in
+  `docs/paper-notes.md`. Questions 2, 4 and 5 were attempted early and are
+  marked provisional; they get redone from scratch in 0.6.
+- **11 Sep 2026** — chunk **0.3** landed. The first Go is in `internal/warmup/`:
+  a `Writer` struct, a `NewWriter` constructor, a pointer-receiver `MoveOffset`,
+  and one same-package test. The test also exercises the method, which goes
+  beyond the exit criterion's one field check; accepted. The rusty part was
+  writing a test function, not the struct or the receivers.
 
 Open question still being chewed on: **why does keeping every key in RAM put a
 ceiling on this design?**
@@ -178,6 +186,9 @@ while producing something that builds.
 0.5 looks trivial and is not — slice aliasing is the bug that will bite hardest
 in Phase 1.
 
+0.3–0.5 all live in `internal/warmup/`, a scratch package that is **deleted
+when Phase 0 ends**. Nothing in Phase 1 may import it.
+
 ### Phase 1 — The record format
 
 | # | Chunk | Exit criterion |
@@ -236,8 +247,9 @@ lands.
 
 ## Next chunk
 
-**0.2** — a reading chunk, no Go. Answer paper questions **1** ("why
-append-only?") and **3** ("how do you delete in a file you cannot edit?") in
-`docs/paper-notes.md`. Prose, in your own words, allowed to be wrong.
+**0.4** — errors, in the same `internal/warmup/` package. A sentinel error, a
+function that returns it, and a caller that checks it. Exit criterion: the test
+passes using `errors.Is`, not `==`. The detailed handover comes at the start of
+the next session.
 
-Then 0.3. One per day. Ask `cask-lead` for it if the list above is not enough.
+Then 0.5. One per day. Ask `cask-lead` for it if the list above is not enough.

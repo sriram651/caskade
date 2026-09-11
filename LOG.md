@@ -22,3 +22,17 @@ date        mins  what          detail
                                 Docs-sync commit for 0.1. No Go touched. 35m is
                                 wall-clock "with a lot of distractions" — under
                                 the ceiling, attention was less than the number.
+2026-09-11  ~55-60m 0.3         Over the ceiling. Time went on getting back
+                                into pointer/value receivers (receiver vs
+                                parameter), reading the chunk's requirement,
+                                self-check questions, then both files.
+                                Throwaway internal/warmup package (see
+                                decisions.md). Warm-up with cask-coach; writing
+                                test functions is the main rust. Wrote Writer,
+                                NewWriter, pointer-receiver
+                                MoveOffset, one test; two test iterations after
+                                feedback (idiomatic failure checks, Name check,
+                                got/want messages). Reviewer: done, build/vet/
+                                test/gofmt clean. Scope: test also exercises
+                                MoveOffset (3 checks vs 1 field check in the
+                                handover), accepted.
