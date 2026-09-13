@@ -38,3 +38,33 @@ at the start of the next session. From 0.3's style points, which stay the
 owner's call: 0.4 will be printing an error value, so `Fatalf`/`Errorf` with a
 format verb is right there if wanted. The choice between `Fatal` (stop) and
 `Error` (keep going) on independent checks also comes up again.
+
+**13 Sep 2026**
+Landed: chunk **0.4a**, after a two-day gap and late on a Sunday. 0.4 was split
+into 0.4a/0.4b at the start of the sitting because the observed pace is running
+about double the estimates. `internal/warmup/warmup.go` now has
+`ErrNegativeDelta`, built once at package level with `errors.New`, and
+`MoveOffset` returns it on a negative delta without touching the offset, `nil`
+otherwise. The test checks it with `errors.Is`. Exit criterion met;
+build/vet/test/gofmt all green. **Two assertion gaps were left open on purpose,
+not by accident.** First: the two good-path calls (`warmup_test.go:17` and
+`:23`) discard the returned error. Converting them to nil-checks was proposed
+and **declined** — that is now a closed decision (`docs/decisions.md`,
+2026-09-13), scoped to this throwaway package, with the assert-the-error
+convention starting in Phase 1 instead. Do not reopen it here. Second: nothing
+asserts that the offset is unchanged after a rejected call, so a `MoveOffset`
+that returned the sentinel *and* corrupted the offset would still pass. That
+one **is** picked up in 0.4b. Trade-off, stated plainly: green-and-committed was
+chosen over more assertions at 22:45 on a Sunday. That is the right call under
+the pacing rules — the cost is one known hole, written down here and in
+`PLAN.md` rather than discovered by surprise later.
+Next: chunk **0.4b**, same package, two steps in order. (1) Assert the offset is
+**still 37** after the rejected `MoveOffset(-14)` call — one check, and it goes
+first so it cannot get squeezed out if step 2 runs long. Note that an earlier
+draft asserted `-14` there, an inverted invariant that only passed while the
+guard was broken; 37 is the correct value. (2) Add a caller that wraps
+`ErrNegativeDelta` with some context, via `fmt.Errorf` and the `%w` verb, and
+assert `errors.Is` still matches through the wrap. Exit criterion: both
+assertions pass. Not in scope: `errors.As`, custom error types, `errors.Join`,
+table tests, and the good-path nil-checks. Worth doing once for the lesson: try
+`==` against the wrapped error, watch it fail, then put `errors.Is` back.

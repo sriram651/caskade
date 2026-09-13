@@ -1,6 +1,9 @@
 package warmup
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 var TestName = "Director"
 
@@ -21,5 +24,11 @@ func TestByteOffset(t *testing.T) {
 
 	if w.offset != 37 {
 		t.Fatal("Expected 37, Got", w.offset)
+	}
+
+	err := w.MoveOffset(-14)
+
+	if !errors.Is(err, ErrNegativeDelta) {
+		t.Errorf("Expected %s, got %s", ErrNegativeDelta, err)
 	}
 }

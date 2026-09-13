@@ -1,7 +1,7 @@
 # caskade — a Bitcask-style key/value store in Go
 
-**Status:** Phase 0 in progress. Chunks 0.1–0.3 landed; the tree builds and tests pass.
-**Last updated:** 11 Sep 2026
+**Status:** Phase 0 in progress. Chunks 0.1–0.4a landed; the tree builds and tests pass.
+**Last updated:** 13 Sep 2026
 
 A plan plus a session handover, written so it is cheap to pick up after a gap.
 Read **Where I am** and **Next chunk** first — the rest is reference.
@@ -83,6 +83,21 @@ one follows you back into actual work. Save Phase 7 for real sittings.
   and one same-package test. The test also exercises the method, which goes
   beyond the exit criterion's one field check; accepted. The rusty part was
   writing a test function, not the struct or the receivers.
+- **12 Sep 2026** — skipped. A line in `LOG.md`, nothing more.
+- **13 Sep 2026** — back in after a two-day gap, late on a Sunday. Chunk **0.4**
+  split in two (see below) because the observed pace is running well over the
+  estimates and the hour was short. **0.4a landed:** `internal/warmup` now has
+  a package-level `ErrNegativeDelta` built once with `errors.New`, `MoveOffset`
+  returns it on a negative delta without touching the offset, and the test
+  checks it with `errors.Is`. Exit criterion met. Two assertion gaps were left
+  open on purpose at the end of the sitting — see 0.4b below and the
+  2026-09-13 row in `docs/decisions.md`.
+
+**Observed pace, three chunks in:** every chunk so far has taken roughly twice
+its 20–25 minute estimate (~55m, 35m, ~55–60m). That is not a discipline
+problem — the estimates are wrong. The remaining Phase 0 chunks are sized
+smaller to match, and Phase 1 gets written up against the real number rather
+than the hoped-for one.
 
 Open question still being chewed on: **why does keeping every key in RAM put a
 ceiling on this design?**
@@ -186,9 +201,33 @@ while producing something that builds.
 | 0.1 | `go mod init`, a `cmd/caskdemo` that prints a version string | `go build ./...` is green, binary runs |
 | 0.2 | Answer paper questions 1 and 3 in `docs/paper-notes.md` | Both answered in prose, however badly |
 | 0.3 | A struct with exported and unexported fields, a constructor, a pointer-receiver method | One test asserts one field after construction |
-| 0.4 | A sentinel error, a function that returns it, a caller that checks it | Test passes using `errors.Is`, not `==` |
+| 0.4a | A sentinel error and a function that returns it directly | Test passes using `errors.Is`, not `==` |
+| 0.4b | Assert the offset is unchanged after a rejected call, then wrap the sentinel with `%w` behind a bit of context | The rejected-call test asserts `offset` is still 37; `errors.Is` still passes on the wrapped error, and `==` would not |
 | 0.5 | A function that copies a `[]byte` | Test proves mutating the copy leaves the original alone |
 | 0.6 | Answer paper questions 2, 4 and 5 | All five now answered in `docs/paper-notes.md` |
+
+0.4 was split into **0.4a** and **0.4b** on 13 Sep. 0.4a is the mechanics of a
+sentinel error; 0.4b is the part that shows *why* `errors.Is` exists rather than
+`==`, which is worth its own sitting with full attention.
+
+**0.4b picks up one assertion gap left by 0.4a, first, before the wrapping.**
+The test currently proves that a negative delta returns the sentinel, but says
+nothing about what happened to `offset`. A broken `MoveOffset` that returned the
+sentinel *and also* corrupted the offset would pass today. An earlier draft did
+assert the offset after a rejected call, but against `-14` — an inverted
+invariant that only held if the guard was missing — and it was deleted rather
+than corrected. The correct assertion is that `offset` is **still 37** after the
+rejected call, because a rejected call must not mutate state. That is one
+check; it goes in first precisely so it cannot get squeezed out if the wrapping
+runs long.
+
+The *other* gap — the two good-path calls discarding their returned error — is
+**deliberately not** in 0.4b. That is a settled decision (`docs/decisions.md`,
+2026-09-13), scoped to the throwaway `internal/warmup` package; the
+assert-the-error convention starts in Phase 1 and does not need retrofitting
+into code that gets deleted. Note that `MoveOffset` reports 100% statement
+coverage: real, but it only means both branches ran, not that the good path's
+return value was ever examined. Coverage is not assertion.
 
 0.5 looks trivial and is not — slice aliasing is the bug that will bite hardest
 in Phase 1.
@@ -254,9 +293,30 @@ lands.
 
 ## Next chunk
 
-**0.4** — errors, in the same `internal/warmup/` package. A sentinel error, a
-function that returns it, and a caller that checks it. Exit criterion: the test
-passes using `errors.Is`, not `==`. The detailed handover comes at the start of
-the next session.
+**0.4b** — two things, in that order, in `internal/warmup/`.
+
+1. **Close the state-invariant gap.** After the rejected `MoveOffset(-14)` call,
+   assert the offset is **still 37**. One check. Two minutes. It goes first.
+2. **Wrap the sentinel.** Add a caller — a second function or method that calls
+   `MoveOffset` and, on failure, returns an error carrying some context *around*
+   `ErrNegativeDelta` rather than replacing it. Assert with `errors.Is` that the
+   wrapped error still matches the sentinel.
+
+**Exit criterion:** the test asserts the offset is unchanged after a rejected
+call, **and** `errors.Is` passes against `ErrNegativeDelta` on the error
+returned by the wrapping caller.
+
+**Look up:** `fmt.Errorf` and the `%w` verb, `errors.Is`, and — for reading, not
+for using yet — `errors.Unwrap`.
+
+**Explicitly not in 0.4b:** `errors.As`, custom error types implementing
+`error`, `errors.Join` or multiple `%w` verbs in one call, table-driven tests,
+nil-checks on the good-path `MoveOffset` calls (settled, see
+`docs/decisions.md`), and any tidy-up of `internal/warmup` — it gets deleted
+whole at the end of Phase 0.
+
+**Worth proving to yourself once:** swap the `errors.Is` check for `==` against
+the wrapped error and watch the test fail. That failure is the entire reason
+`errors.Is` exists. Put it back afterwards.
 
 Then 0.5. One per day. Ask `cask-lead` for it if the list above is not enough.
