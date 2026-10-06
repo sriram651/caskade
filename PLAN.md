@@ -1,7 +1,7 @@
 # caskade — a Bitcask-style key/value store in Go
 
-**Status:** Phase 0 in progress. Chunks 0.1–0.4a landed; the tree builds and tests pass.
-**Last updated:** 13 Sep 2026
+**Status:** Phase 0 closed at 0.4a (6 Oct). Phase 1 starts with 1.1a. The tree builds and tests pass.
+**Last updated:** 6 Oct 2026
 
 A plan plus a session handover, written so it is cheap to pick up after a gap.
 Read **Where I am** and **Next chunk** first — the rest is reference.
@@ -93,11 +93,20 @@ one follows you back into actual work. Save Phase 7 for real sittings.
   open on purpose at the end of the sitting — see 0.4b below and the
   2026-09-13 row in `docs/decisions.md`.
 
-**Observed pace, three chunks in:** every chunk so far has taken roughly twice
-its 20–25 minute estimate (~55m, 35m, ~55–60m). That is not a discipline
-problem — the estimates are wrong. The remaining Phase 0 chunks are sized
-smaller to match, and Phase 1 gets written up against the real number rather
-than the hoped-for one.
+- **14 Sep – 5 Oct 2026** — a three-week gap. 5 Oct: came back, agreed the
+  re-plan below, and then did no work because of the day job, so that day is
+  logged as skipped too. The owner named the cause: motivation dropped once the
+  work reached the boring part. That means the warm-up drills on a throwaway
+  package, where nothing touched Bitcask.
+- **6 Oct 2026** — restart. **Phase 0 closed at 0.4a.** 0.4b, 0.5 and 0.6
+  are not done as warm-ups. Their lessons move into the real store (see
+  Phase 0 below and `docs/decisions.md`, 2026-10-06). Phase 1 chunks halved.
+
+**Observed pace, four chunks in:** every chunk ran 2–3x its estimate (~55m,
+35m, ~55–60m, ~55m). That is not a discipline problem; the estimates are
+wrong. The response is smaller chunks, not more paragraphs about it. Phase 1
+is now written at roughly half its earlier size per chunk, and each chunk
+should still be expected to take up to twice what it looks like.
 
 Open question still being chewed on: **why does keeping every key in RAM put a
 ceiling on this design?**
@@ -191,62 +200,61 @@ phase rather than working longer.
 Each chunk names an **exit criterion**: the concrete thing that is true when it
 is done. No exit criterion means the chunk is not defined well enough yet.
 
-### Phase 0 — Cold start (Go recall + skeleton)
+### Phase 0 — Cold start (Go recall + skeleton) — **closed 6 Oct at 0.4a**
 
-The point of this phase is not the code. It is getting the muscle memory back
-while producing something that builds.
+The point of this phase was getting the muscle memory back while producing
+something that builds.
 
-| # | Chunk | Exit criterion |
-|---|---|---|
-| 0.1 | `go mod init`, a `cmd/caskdemo` that prints a version string | `go build ./...` is green, binary runs |
-| 0.2 | Answer paper questions 1 and 3 in `docs/paper-notes.md` | Both answered in prose, however badly |
-| 0.3 | A struct with exported and unexported fields, a constructor, a pointer-receiver method | One test asserts one field after construction |
-| 0.4a | A sentinel error and a function that returns it directly | Test passes using `errors.Is`, not `==` |
-| 0.4b | Assert the offset is unchanged after a rejected call, then wrap the sentinel with `%w` behind a bit of context | The rejected-call test asserts `offset` is still 37; `errors.Is` still passes on the wrapped error, and `==` would not |
-| 0.5 | A function that copies a `[]byte` | Test proves mutating the copy leaves the original alone |
-| 0.6 | Answer paper questions 2, 4 and 5 | All five now answered in `docs/paper-notes.md` |
+| # | Chunk | Exit criterion | Status |
+|---|---|---|---|
+| 0.1 | `go mod init`, a `cmd/caskdemo` that prints a version string | `go build ./...` is green, binary runs | done |
+| 0.2 | Answer paper questions 1 and 3 in `docs/paper-notes.md` | Both answered in prose, however badly | done |
+| 0.3 | A struct with exported and unexported fields, a constructor, a pointer-receiver method | One test asserts one field after construction | done |
+| 0.4a | A sentinel error and a function that returns it directly | Test passes using `errors.Is`, not `==` | done |
+| 0.4b | Wrap the sentinel with `%w` | — | **moved to 1.6c** |
+| 0.5 | Copy a `[]byte` without aliasing | — | **moved to 1.5b** |
+| 0.6 | Paper questions 2, 4 and 5 | — | **moved to 3.0, 4.0 and 9.0** |
 
-0.4 was split into **0.4a** and **0.4b** on 13 Sep. 0.4a is the mechanics of a
-sentinel error; 0.4b is the part that shows *why* `errors.Is` exists rather than
-`==`, which is worth its own sitting with full attention.
+**Why it closed early:** motivation died on the throwaway drills, and every
+chunk ran 2–3x over. The remaining lessons are learned where the real store
+needs them. Full reasoning is in `docs/decisions.md`, 2026-10-06.
 
-**0.4b picks up one assertion gap left by 0.4a, first, before the wrapping.**
-The test currently proves that a negative delta returns the sentinel, but says
-nothing about what happened to `offset`. A broken `MoveOffset` that returned the
-sentinel *and also* corrupted the offset would pass today. An earlier draft did
-assert the offset after a rejected call, but against `-14` — an inverted
-invariant that only held if the guard was missing — and it was deleted rather
-than corrected. The correct assertion is that `offset` is **still 37** after the
-rejected call, because a rejected call must not mutate state. That is one
-check; it goes in first precisely so it cannot get squeezed out if the wrapping
-runs long.
+**Accepted cost:** the 0.4a test gap (nothing asserts `offset` is unchanged
+after a rejected `MoveOffset`) is **not fixed**. It is deleted along with the
+package. The same invariant (a rejected operation must not change state)
+comes back in the real store and gets asserted there.
 
-The *other* gap — the two good-path calls discarding their returned error — is
-**deliberately not** in 0.4b. That is a settled decision (`docs/decisions.md`,
-2026-09-13), scoped to the throwaway `internal/warmup` package; the
-assert-the-error convention starts in Phase 1 and does not need retrofitting
-into code that gets deleted. Note that `MoveOffset` reports 100% statement
-coverage: real, but it only means both branches ran, not that the good path's
-return value was ever examined. Coverage is not assertion.
+`internal/warmup/` is scratch and is **deleted by the owner** as the first step
+of 6 Oct's session. Nothing in Phase 1 may import it.
 
-0.5 looks trivial and is not — slice aliasing is the bug that will bite hardest
-in Phase 1.
+### Phase 1 — The record format (halved 6 Oct)
 
-0.3–0.5 all live in `internal/warmup/`, a scratch package that is **deleted
-when Phase 0 ends**. Nothing in Phase 1 may import it.
-
-### Phase 1 — The record format
+Every chunk is about half the size of the original Phase 1 list, because the
+observed pace is 2–3x the estimate. Phase 1 is where the
+assert-every-returned-error convention starts (`docs/decisions.md`,
+2026-09-13).
 
 | # | Chunk | Exit criterion |
 |---|---|---|
-| 1.1 | Write `docs/format.md`: field order, widths, byte order. No Go. | The layout table exists and every width is justified |
-| 1.2 | Encode the fixed-size header into a pre-sized `[]byte` | Test asserts total length and one field's bytes |
-| 1.3 | Decode the header back | Round-trip test on the header alone |
+| 1.1a | `docs/format.md`: the record layout table. No Go. ~15 min | Six fields (`crc`, `tstamp`, `ksz`, `value_sz`, `key`, `value`) in order, each with a width in bytes and an unsigned type; one line naming the byte order; one line giving the fixed header's total size |
+| 1.1b | `docs/format.md`: one sentence justifying each width. No Go. | Every row has a reason (e.g. what is the largest key a `ksz` of that width allows, and is that enough?) |
+| 1.2a | Create `internal/record` with the header size as a named constant | One test asserts the constant equals the total in `docs/format.md` |
+| 1.2b | Encode the fixed header into a pre-sized `[]byte` | Test asserts the length and the bytes of one field (`ksz`) |
+| 1.3a | Decode the header back | Round-trip test on one header |
+| 1.3b | Decoding a buffer shorter than the header returns a sentinel error | Test matches it with `errors.Is` |
 | 1.4 | Encode a full record: header + key + value | Test asserts total length for a known key/value |
-| 1.5 | Decode a full record | Table round-trip test: empty value, 1-byte key, large value |
-| 1.6 | CRC over the right span, verified on decode | Flipping one byte returns a corruption error |
+| 1.5a | Decode a full record | Round-trip test on one record |
+| 1.5b | **Slice aliasing (was 0.5).** Decoded key and value must not share memory with the input buffer | Test overwrites the input buffer after decoding and asserts the decoded key is unchanged |
+| 1.5c | Table-driven round-trip | Cases: empty value, 1-byte key, large value |
+| 1.6a | Compute the CRC over the right span on encode | Test asserts the stored CRC equals `crc32` over that span |
+| 1.6b | Verify the CRC on decode | Flipping one byte returns a corruption sentinel, matched with `errors.Is` |
+| 1.6c | **Error wrapping (was 0.4b).** Wrap the corruption error with context (stored vs. computed CRC) using `%w` | `errors.Is` still matches the sentinel through the wrap, and an `==` check against the wrapped error is shown to fail once |
 
-Stdlib in play: `encoding/binary`, `hash/crc32`, `time`.
+Stdlib in play: `encoding/binary`, `hash/crc32`, `time`, `errors`, `fmt.Errorf`
+with `%w`, `copy` / `bytes.Clone`.
+
+1.5b looks trivial and is not. Slice aliasing is the bug that will bite hardest
+once records are read from real files and buffers get reused.
 
 ### Phase 2 — The append-only file
 
@@ -262,17 +270,30 @@ Stdlib in play: `encoding/binary`, `hash/crc32`, `time`.
 Stdlib in play: `os.OpenFile` and its flags, `io.ReaderAt`, `File.Sync`,
 `io.EOF` vs `io.ErrUnexpectedEOF`, `t.TempDir`.
 
+Phase 2 has not been halved yet. Halve it, using the real Phase 1 pace, before
+starting 2.1.
+
 ### Phase 3 onward — coarse on purpose
 
-- **Phase 3 — Keydir.** The in-memory index, then `Put` and `Get` on top of it.
-- **Phase 4 — Recovery.** Rebuild the keydir by scanning on open; reject the
-  torn tail record by checksum. → **Milestone 1.**
+Each paper question that moved out of 0.6 opens the phase that needs its
+answer. The provisional answers from 10 Sep in `docs/paper-notes.md` get
+**redone from scratch** at that point, not edited.
+
+- **Phase 3 — Keydir.** **3.0:** paper question 2 (what lives in RAM, what it
+  costs per key, what that limits). Then the in-memory index, then `Put` and
+  `Get` on top of it.
+- **Phase 4 — Recovery.** **4.0:** paper question 4 (how the in-memory part
+  comes back on restart, and what the hint file is for). Then rebuild the
+  keydir by scanning on open; reject the torn tail record by checksum.
+  → **Milestone 1.**
 - **Phase 5 — Delete.** Tombstones, and what `Get` does with one.
 - **Phase 6 — Rotation.** Many datafiles, one active writer.
 - **Phase 7 — Concurrency.** `RWMutex` over the keydir, then `-race`.
   → **Milestone 2.** Real sittings only, not office breaks.
 - **Phase 8 — Hint files.** Fast startup without rescanning every value.
-- **Phase 9 — Merge.** Compaction while reads are live. → **Milestone 4.**
+- **Phase 9 — Merge.** **9.0:** paper question 5 (where wasted space goes,
+  and what merging does about it). Then compaction while reads are live.
+  → **Milestone 4.**
 - **Phase 10 — RESP server.** Optional. → **Milestone 3.**
 
 Ask `cask-lead` to write out the next phase in detail once the phase before it
@@ -293,30 +314,28 @@ lands.
 
 ## Next chunk
 
-**0.4b** — two things, in that order, in `internal/warmup/`.
+**Step 0 — delete `internal/warmup` (owner, ~3 min).** Remove the whole
+package directory with git so the deletion is staged. Then confirm
+`go build ./...` and `go test ./...` still pass. Nothing imports it, so they
+should. Commit this on its own, before 1.1a, so the deletion stays in a
+separate commit from the format doc.
 
-1. **Close the state-invariant gap.** After the rejected `MoveOffset(-14)` call,
-   assert the offset is **still 37**. One check. Two minutes. It goes first.
-2. **Wrap the sentinel.** Add a caller — a second function or method that calls
-   `MoveOffset` and, on failure, returns an error carrying some context *around*
-   `ErrNegativeDelta` rather than replacing it. Assert with `errors.Is` that the
-   wrapped error still matches the sentinel.
+**Then 1.1a — the record layout table**, in a new `docs/format.md`. No Go.
 
-**Exit criterion:** the test asserts the offset is unchanged after a rejected
-call, **and** `errors.Is` passes against `ErrNegativeDelta` on the error
-returned by the wrapping caller.
+- **Goal:** pin down exactly what bytes one record takes on disk, in order.
+- **Exit criterion:** a table of the paper's six fields (`crc`, `tstamp`,
+  `ksz`, `value_sz`, `key`, `value`) in order, each with a width in bytes and an
+  unsigned type (the two variable-length fields say so); one line naming the
+  byte order; one line giving the fixed header's total size in bytes.
+- **Look up:** the record layout figure on page 2 of the paper;
+  `binary.BigEndian` / `binary.LittleEndian` in `encoding/binary`, just to see
+  the choice; the return type of `crc32.ChecksumIEEE` in `hash/crc32`, which
+  settles one width for you.
+- **Not in 1.1a:** any Go; a reason for each width (that is 1.1b); how deletes
+  are marked (Phase 5); file naming and directory layout (2.1); version fields
+  or magic bytes.
 
-**Look up:** `fmt.Errorf` and the `%w` verb, `errors.Is`, and — for reading, not
-for using yet — `errors.Unwrap`.
+**Realistic time:** about 20 minutes total (3 for step 0, ~15 for 1.1a). If it
+reaches 35, stop and commit whatever table exists.
 
-**Explicitly not in 0.4b:** `errors.As`, custom error types implementing
-`error`, `errors.Join` or multiple `%w` verbs in one call, table-driven tests,
-nil-checks on the good-path `MoveOffset` calls (settled, see
-`docs/decisions.md`), and any tidy-up of `internal/warmup` — it gets deleted
-whole at the end of Phase 0.
-
-**Worth proving to yourself once:** swap the `errors.Is` check for `==` against
-the wrapped error and watch the test fail. That failure is the entire reason
-`errors.Is` exists. Put it back afterwards.
-
-Then 0.5. One per day. Ask `cask-lead` for it if the list above is not enough.
+Then 1.1b. One per day.
