@@ -77,3 +77,37 @@ date        mins  what          detail
                                 chunk, not another paragraph.
                                 Finished 23:12 on a Sunday; Monday's 45m ceiling
                                 gets paid out of that.
+2026-09-14  --    skipped       14 Sep - 4 Oct: away, 21 days, one line for
+  to                            the range. Cause, as named by the owner:
+2026-10-04                      motivation dropped on the throwaway Phase 0
+                                warm-up drills, which never touched Bitcask.
+                                That is a plan-shape signal, not a discipline
+                                one, and it was answered with a re-plan.
+2026-10-05  --    skipped       Came back and agreed with cask-lead to re-plan,
+                                then no work because of the day job.
+2026-10-06  ??m   restart+1.1a  Tue, one session. Minutes not recorded; clearly well over
+                                the 45m weekday ceiling. Owner said yes to the
+                                re-plan: Phase 0 closed at 0.4a, its lessons
+                                folded into Phase 1, Phase 1 chunks halved
+                                (9ba29d9). Step 0: owner deleted internal/warmup
+                                with build/vet/test green (e0b14f9). Chunk 1.1a
+                                landed (60182f1, committed and pushed by owner):
+                                record layout table in docs/format.md. crc u32,
+                                tstamp u64 (Unix ms), ksz u16, value_sz u32,
+                                key and value variable; 18-byte fixed header,
+                                big-endian. Most of the time went to catching up
+                                after three weeks and guided reasoning on field
+                                widths: width vs policy limit, no padding for
+                                variable fields, uint32-ms overflow (~49.7
+                                days), the 128 KB value cap as a Put policy on
+                                top of a uint32 width, endianness. Two
+                                save-related false starts; two factual fixes in
+                                the doc (a swapped endianness example, and a
+                                header-size note that said "all bytes").
+                                Ceiling: counted as an over-ceiling day, with
+                                the reason recorded (one-off re-plan + three-
+                                week catch-up). Not a pre-agreed exception: no
+                                reason was stated before going past 45m, so it
+                                goes in the exception count as over, not as
+                                approved. The one-off reason does not carry
+                                forward; the next session is a normal 45m day.

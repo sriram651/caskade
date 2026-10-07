@@ -69,18 +69,30 @@ assertions pass. Not in scope: `errors.As`, custom error types, `errors.Join`,
 table tests, and the good-path nil-checks. Worth doing once for the lesson: try
 `==` against the wrapped error, watch it fail, then put `errors.Is` back.
 
-**5–6 Oct 2026** (written at the start of the 6 Oct session, ahead of the work)
-Landed: no code. This is a re-plan after a three-week gap (14 Sep – 4 Oct).
-On 5 Oct the plan was agreed and then the day was skipped because of work.
-6 Oct is the restart. **0.4b above is superseded and will not be done.**
-Phase 0 is closed at 0.4a. Wrapping moves to 1.6c, slice copying to 1.5b, and
-paper questions 2/4/5 to the start of Phases 3/4/9. Phase 1 is halved. Accepted
-cost: the 0.4a offset-unchanged gap is dropped along with the package. See
-`docs/decisions.md`, 2026-10-06. Tree was clean and green on re-entry.
-Next: **step 0**: delete `internal/warmup` with git, confirm `go build ./...`
-and `go test ./...` pass, and commit that on its own. **Then 1.1a**: the record
-layout table in a new `docs/format.md`, no Go. Exit criterion: six fields in
-order with widths and unsigned types, plus the byte order and the fixed header
-size. Details are in `PLAN.md` under "Next chunk". About 20 minutes total; stop
-at 35 and commit what exists. Replace this entry with a real handover at the
-end of the session.
+**6 Oct 2026** (restart after a three-week gap; 5 Oct agreed the re-plan,
+then skipped because of work)
+Landed: three commits. `e0b14f9` deleted `internal/warmup` and closed Phase 0,
+still green. `9ba29d9` is the re-plan (0.4b superseded; see `docs/decisions.md`,
+2026-10-06). `60182f1` is chunk **1.1a**, the record layout table in
+`docs/format.md`: `crc` u32 (set by `crc32.ChecksumIEEE`), `tstamp` u64 Unix
+milliseconds, `ksz` u16, `value_sz` u32, then `key` and `value` (variable).
+Fixed header 18 bytes, big-endian. Exit criterion met.
+**Reasoning already worked out for 1.1b, so it isn't lost:**
+- `tstamp`: a u32 of milliseconds overflows after ~49.7 days (Feb 1970). A u64
+  lasts ~584 million years.
+- `ksz`: a 64 KB maximum is ample. The width is a ceiling and only costs the
+  field's own 2 bytes, because variable fields aren't padded. The keydir's RAM
+  cost argues for a lower *policy* key limit later, not a smaller width.
+- `value_sz`: u32 on disk, with a 128 KB value cap enforced in `Put` as policy
+  (owner's choice), so the cap can change without changing the format.
+- Byte order: the reason now in `format.md` explains why writer and reader must
+  *agree*, not why *big* over little. The real reason is that big-endian reads
+  naturally in a hex dump.
+- Carry-forward for 1.2b: `time.Time.UnixMilli` returns a signed type, so the
+  encoder needs an explicit conversion into the u64 field.
+Next: chunk **1.1b**, `docs/format.md` only, no Go. One sentence justifying
+each width (the four fixed fields), and sharpen the byte-order reason to say
+why big rather than little. Exit criterion: every fixed-width row has a reason,
+and the byte-order line says why big-endian. ~15 min. Not in scope: the
+`UnixMilli` conversion (1.2b), choosing the policy key limit, enforcing the
+value cap (that comes with `Put`), and file layout (2.1).

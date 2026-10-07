@@ -1,6 +1,6 @@
 # caskade — a Bitcask-style key/value store in Go
 
-**Status:** Phase 0 closed at 0.4a (6 Oct). Phase 1 starts with 1.1a. The tree builds and tests pass.
+**Status:** Phase 1 in progress. 1.1a landed; 1.1b is next. The tree builds and tests pass.
 **Last updated:** 6 Oct 2026
 
 A plan plus a session handover, written so it is cheap to pick up after a gap.
@@ -101,6 +101,10 @@ one follows you back into actual work. Save Phase 7 for real sittings.
 - **6 Oct 2026** — restart. **Phase 0 closed at 0.4a.** 0.4b, 0.5 and 0.6
   are not done as warm-ups. Their lessons move into the real store (see
   Phase 0 below and `docs/decisions.md`, 2026-10-06). Phase 1 chunks halved.
+  The same session deleted `internal/warmup`
+  (still green) and landed **1.1a**: `docs/format.md` has the record layout.
+  `crc` u32, `tstamp` u64 Unix ms, `ksz` u16, `value_sz` u32, key, value;
+  18-byte header, big-endian. The reasoning for 1.1b is captured in `NOTES.md`.
 
 **Observed pace, four chunks in:** every chunk ran 2–3x its estimate (~55m,
 35m, ~55–60m, ~55m). That is not a discipline problem; the estimates are
@@ -314,28 +318,19 @@ lands.
 
 ## Next chunk
 
-**Step 0 — delete `internal/warmup` (owner, ~3 min).** Remove the whole
-package directory with git so the deletion is staged. Then confirm
-`go build ./...` and `go test ./...` still pass. Nothing imports it, so they
-should. Commit this on its own, before 1.1a, so the deletion stays in a
-separate commit from the format doc.
+**1.1b — justify each width**, in `docs/format.md`. No Go.
 
-**Then 1.1a — the record layout table**, in a new `docs/format.md`. No Go.
+- **Goal:** each fixed-width field says *why* it has that width, so the format
+  can be defended without re-deriving it.
+- **Exit criterion:** each of the four fixed-width rows (`crc`, `tstamp`, `ksz`,
+  `value_sz`) has a one-sentence reason, and the byte-order line says why
+  **big**-endian rather than only why writer and reader must agree.
+- **Inputs:** the reasoning was already worked out on 6 Oct and is in
+  `NOTES.md`. This chunk is mostly writing it into the doc in your own words.
+- **Not in 1.1b:** any Go; the `UnixMilli` signed-to-unsigned conversion (that
+  is 1.2b); choosing a policy key limit; enforcing the 128 KB value cap (it
+  comes with `Put`); file layout (2.1).
 
-- **Goal:** pin down exactly what bytes one record takes on disk, in order.
-- **Exit criterion:** a table of the paper's six fields (`crc`, `tstamp`,
-  `ksz`, `value_sz`, `key`, `value`) in order, each with a width in bytes and an
-  unsigned type (the two variable-length fields say so); one line naming the
-  byte order; one line giving the fixed header's total size in bytes.
-- **Look up:** the record layout figure on page 2 of the paper;
-  `binary.BigEndian` / `binary.LittleEndian` in `encoding/binary`, just to see
-  the choice; the return type of `crc32.ChecksumIEEE` in `hash/crc32`, which
-  settles one width for you.
-- **Not in 1.1a:** any Go; a reason for each width (that is 1.1b); how deletes
-  are marked (Phase 5); file naming and directory layout (2.1); version fields
-  or magic bytes.
+**Realistic time:** ~15 minutes. Stop at 30 and commit what exists.
 
-**Realistic time:** about 20 minutes total (3 for step 0, ~15 for 1.1a). If it
-reaches 35, stop and commit whatever table exists.
-
-Then 1.1b. One per day.
+Then 1.2a, the first Go in `internal/record`. One per day.
