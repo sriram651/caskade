@@ -111,3 +111,28 @@ date        mins  what          detail
                                 goes in the exception count as over, not as
                                 approved. The one-off reason does not carry
                                 forward; the next session is a normal 45m day.
+2026-10-07  ??m   1.1b          Wed, one chunk. Minutes not recorded, and the
+                                commits do not settle it (1.1b handed over in
+                                2d92b1b at 13:05, landed in c776afa at 16:31;
+                                that span is not session time). So whether the
+                                45m ceiling held is unknown, not assumed either
+                                way. One chunk, so no extra-chunk exception.
+                                Landed: "Why these widths" list in
+                                docs/format.md, one reason per fixed field. crc
+                                4 bytes (hash/crc32 returns uint32); tstamp 8
+                                bytes (4 bytes of Unix ms overflows ~50 days
+                                after 1970); ksz 2 bytes (64 KB max key);
+                                value_sz 4 bytes; big-endian because it reads in
+                                natural order (10 -> 00 0A). Owner fixed one
+                                typo ("8 bits" -> "8 bytes"). Optional 128 KB
+                                value-cap note left out of format.md by choice;
+                                it stays in NOTES.md.
+                                Where the time went: a refresher on what each
+                                field is, then a good part of the session on
+                                CRC. What it is; each appended record carries
+                                its own CRC over the bytes after the crc field;
+                                records are never modified once written; size
+                                fields vary per record; the write path (build
+                                the slice with a 4-byte placeholder, CRC the
+                                rest, fill it in, append once). This was
+                                groundwork for 1.2-1.6, not drift.

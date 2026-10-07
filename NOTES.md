@@ -96,3 +96,25 @@ why big rather than little. Exit criterion: every fixed-width row has a reason,
 and the byte-order line says why big-endian. ~15 min. Not in scope: the
 `UnixMilli` conversion (1.2b), choosing the policy key limit, enforcing the
 value cap (that comes with `Put`), and file layout (2.1).
+
+**7 Oct 2026**
+Landed: chunk **1.1b** (`c776afa`). `docs/format.md` now has a "Why these
+widths" list with one reason per fixed field, plus why big-endian: it reads in
+natural order, so 10 shows as `00 0A`. Exit criterion met. The owner decided
+not to put the **128 KB value cap** in `format.md`. It is policy, not format,
+and **is enforced in `Put`** (u32 on disk, so the cap can change without a
+format change). Keep this line until `Put` exists.
+**CRC model, settled this session (sets up 1.2b–1.6a):** there is one CRC per
+appended record, computed only over that record's bytes *after* the `crc`
+field. Records are never modified after they are written, and the size fields
+vary per record. Write path: build the record slice with a 4-byte zero
+placeholder for `crc`, compute the CRC over the rest, fill it in, then append
+once. Still carried for 1.2b: `time.Time.UnixMilli` returns a signed type, so
+it needs an explicit conversion into the u64 field.
+Next: chunk **1.2a**, the first Go since 13 Sep. Create `internal/record` with
+the fixed header size as a named constant, and one test asserting it equals 18
+(the total in `docs/format.md`). Realistic time ~20–25 min, possibly more,
+because this is new-package and test-writing rust after a long gap. Take
+anything half-remembered (package layout, `const`, writing a `_test.go`) to
+`cask-coach` instead of pushing through it. Not in 1.2a: per-field offset
+constants, any encoding, `encoding/binary`, and table tests.

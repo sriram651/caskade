@@ -1,7 +1,7 @@
 # caskade — a Bitcask-style key/value store in Go
 
-**Status:** Phase 1 in progress. 1.1a landed; 1.1b is next. The tree builds and tests pass.
-**Last updated:** 6 Oct 2026
+**Status:** Phase 1 in progress. 1.1a and 1.1b landed; 1.2a (first Go in `internal/record`) is next. The tree builds and tests pass.
+**Last updated:** 7 Oct 2026
 
 A plan plus a session handover, written so it is cheap to pick up after a gap.
 Read **Where I am** and **Next chunk** first — the rest is reference.
@@ -105,6 +105,10 @@ one follows you back into actual work. Save Phase 7 for real sittings.
   (still green) and landed **1.1a**: `docs/format.md` has the record layout.
   `crc` u32, `tstamp` u64 Unix ms, `ksz` u16, `value_sz` u32, key, value;
   18-byte header, big-endian. The reasoning for 1.1b is captured in `NOTES.md`.
+- **7 Oct 2026** — **1.1b** landed: `docs/format.md` justifies each width and
+  why big-endian. The 128 KB value cap stays out of the format; it is policy,
+  enforced in `Put` (noted in `NOTES.md`). The CRC write path is settled: a
+  zero placeholder, CRC over the bytes after it, fill it in, append once.
 
 **Observed pace, four chunks in:** every chunk ran 2–3x its estimate (~55m,
 35m, ~55–60m, ~55m). That is not a discipline problem; the estimates are
@@ -318,19 +322,22 @@ lands.
 
 ## Next chunk
 
-**1.1b — justify each width**, in `docs/format.md`. No Go.
+**1.2a — the header size as a named constant**, in a new package
+`internal/record` (for example `internal/record/record.go` plus
+`record_test.go`). This is the first Go since 13 Sep.
 
-- **Goal:** each fixed-width field says *why* it has that width, so the format
-  can be defended without re-deriving it.
-- **Exit criterion:** each of the four fixed-width rows (`crc`, `tstamp`, `ksz`,
-  `value_sz`) has a one-sentence reason, and the byte-order line says why
-  **big**-endian rather than only why writer and reader must agree.
-- **Inputs:** the reasoning was already worked out on 6 Oct and is in
-  `NOTES.md`. This chunk is mostly writing it into the doc in your own words.
-- **Not in 1.1b:** any Go; the `UnixMilli` signed-to-unsigned conversion (that
-  is 1.2b); choosing a policy key limit; enforcing the 128 KB value cap (it
-  comes with `Put`); file layout (2.1).
+- **Goal:** the code has one named source of truth for the fixed header size.
+- **Exit criterion:** `go test ./...` passes with one test asserting the
+  constant equals **18**, the total in `docs/format.md`. `go vet` and
+  `gofmt -l` are clean.
+- **Look up:** the `const` declaration and package-level constants; `testing.T`
+  and `t.Errorf`.
+- **Not in 1.2a:** per-field offset constants, any encode or decode,
+  `encoding/binary`, `hash/crc32`, and table-driven tests.
+- **If rusty:** package layout, `const` vs `var`, or how a `_test.go` is shaped
+  are `cask-coach` questions. Ask instead of guessing.
 
-**Realistic time:** ~15 minutes. Stop at 30 and commit what exists.
+**Realistic time:** ~20–25 minutes, and it may run longer because this is the
+first Go after a long gap. Stop at 40 and commit whatever is green.
 
-Then 1.2a, the first Go in `internal/record`. One per day.
+Then 1.2b. One per day.
