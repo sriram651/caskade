@@ -1,7 +1,7 @@
 # caskade — a Bitcask-style key/value store in Go
 
-**Status:** Phase 1 in progress. 1.1a and 1.1b landed; 1.2a (first Go in `internal/record`) is next. The tree builds and tests pass.
-**Last updated:** 7 Oct 2026
+**Status:** Phase 1 in progress. 1.1a, 1.1b and 1.2a landed; 1.2b (first `encoding/binary`, header encoder) is next. The tree builds and tests pass.
+**Last updated:** 23 Oct 2026
 
 A plan plus a session handover, written so it is cheap to pick up after a gap.
 Read **Where I am** and **Next chunk** first — the rest is reference.
@@ -109,6 +109,15 @@ one follows you back into actual work. Save Phase 7 for real sittings.
   why big-endian. The 128 KB value cap stays out of the format; it is policy,
   enforced in `Put` (noted in `NOTES.md`). The CRC write path is settled: a
   zero placeholder, CRC over the bytes after it, fill it in, append once.
+- **8 Oct 2026** — planning only. A fixed weekday slot was set up as a two-week
+  trial (see `LOG.md`, "Cadence changes").
+- **14 – 23 Oct 2026** — **1.2a** started 14 Oct and landed 23 Oct (`c32b9e0`).
+  15–22 Oct were skipped. 23 Oct is a Friday, which is reading-only under the
+  trial, so it was an exception. `internal/record` has an exported `HeaderSize = 18` and
+  `TestHeaderSize`. The rust was test-file mechanics again (`record.test.go`,
+  then a `fmt.Println` where an assertion belonged), the same spot as 11 Sep.
+  Practical blocker for Friday reading: the DDIA copy is lost and needs
+  replacing.
 
 **Observed pace, four chunks in:** every chunk ran 2–3x its estimate (~55m,
 35m, ~55–60m, ~55m). That is not a discipline problem; the estimates are
@@ -242,21 +251,21 @@ observed pace is 2–3x the estimate. Phase 1 is where the
 assert-every-returned-error convention starts (`docs/decisions.md`,
 2026-09-13).
 
-| # | Chunk | Exit criterion |
-|---|---|---|
-| 1.1a | `docs/format.md`: the record layout table. No Go. ~15 min | Six fields (`crc`, `tstamp`, `ksz`, `value_sz`, `key`, `value`) in order, each with a width in bytes and an unsigned type; one line naming the byte order; one line giving the fixed header's total size |
-| 1.1b | `docs/format.md`: one sentence justifying each width. No Go. | Every row has a reason (e.g. what is the largest key a `ksz` of that width allows, and is that enough?) |
-| 1.2a | Create `internal/record` with the header size as a named constant | One test asserts the constant equals the total in `docs/format.md` |
-| 1.2b | Encode the fixed header into a pre-sized `[]byte` | Test asserts the length and the bytes of one field (`ksz`) |
-| 1.3a | Decode the header back | Round-trip test on one header |
-| 1.3b | Decoding a buffer shorter than the header returns a sentinel error | Test matches it with `errors.Is` |
-| 1.4 | Encode a full record: header + key + value | Test asserts total length for a known key/value |
-| 1.5a | Decode a full record | Round-trip test on one record |
-| 1.5b | **Slice aliasing (was 0.5).** Decoded key and value must not share memory with the input buffer | Test overwrites the input buffer after decoding and asserts the decoded key is unchanged |
-| 1.5c | Table-driven round-trip | Cases: empty value, 1-byte key, large value |
-| 1.6a | Compute the CRC over the right span on encode | Test asserts the stored CRC equals `crc32` over that span |
-| 1.6b | Verify the CRC on decode | Flipping one byte returns a corruption sentinel, matched with `errors.Is` |
-| 1.6c | **Error wrapping (was 0.4b).** Wrap the corruption error with context (stored vs. computed CRC) using `%w` | `errors.Is` still matches the sentinel through the wrap, and an `==` check against the wrapped error is shown to fail once |
+| # | Chunk | Exit criterion | Status |
+|---|---|---|---|
+| 1.1a | `docs/format.md`: the record layout table. No Go. ~15 min | Six fields (`crc`, `tstamp`, `ksz`, `value_sz`, `key`, `value`) in order, each with a width in bytes and an unsigned type; one line naming the byte order; one line giving the fixed header's total size | done |
+| 1.1b | `docs/format.md`: one sentence justifying each width. No Go. | Every row has a reason (e.g. what is the largest key a `ksz` of that width allows, and is that enough?) | done |
+| 1.2a | Create `internal/record` with the header size as a named constant | One test asserts the constant equals the total in `docs/format.md` | done |
+| 1.2b | Encode the fixed header into a `HeaderSize`-long `[]byte` from a `time.Time`, a key length and a value length; `crc` bytes left as the zero placeholder | Test asserts the length and the two `ksz` bytes (12–13) | next |
+| 1.3a | Decode the header back | Round-trip test on one header | |
+| 1.3b | Decoding a buffer shorter than the header returns a sentinel error | Test matches it with `errors.Is` | |
+| 1.4 | Encode a full record: header + key + value | Test asserts total length for a known key/value | |
+| 1.5a | Decode a full record | Round-trip test on one record | |
+| 1.5b | **Slice aliasing (was 0.5).** Decoded key and value must not share memory with the input buffer | Test overwrites the input buffer after decoding and asserts the decoded key is unchanged | |
+| 1.5c | Table-driven round-trip | Cases: empty value, 1-byte key, large value | |
+| 1.6a | Compute the CRC over the right span on encode | Test asserts the stored CRC equals `crc32` over that span | |
+| 1.6b | Verify the CRC on decode | Flipping one byte returns a corruption sentinel, matched with `errors.Is` | |
+| 1.6c | **Error wrapping (was 0.4b).** Wrap the corruption error with context (stored vs. computed CRC) using `%w` | `errors.Is` still matches the sentinel through the wrap, and an `==` check against the wrapped error is shown to fail once | |
 
 Stdlib in play: `encoding/binary`, `hash/crc32`, `time`, `errors`, `fmt.Errorf`
 with `%w`, `copy` / `bytes.Clone`.
@@ -322,22 +331,35 @@ lands.
 
 ## Next chunk
 
-**1.2a — the header size as a named constant**, in a new package
-`internal/record` (for example `internal/record/record.go` plus
-`record_test.go`). This is the first Go since 13 Sep.
+**1.2b: encode the fixed header**, in `internal/record/record.go` with its
+test in `record_test.go`. This is the first `encoding/binary` in any of the
+owner's repos, so it is new ground.
 
-- **Goal:** the code has one named source of truth for the fixed header size.
-- **Exit criterion:** `go test ./...` passes with one test asserting the
-  constant equals **18**, the total in `docs/format.md`. `go vet` and
-  `gofmt -l` are clean.
-- **Look up:** the `const` declaration and package-level constants; `testing.T`
-  and `t.Errorf`.
-- **Not in 1.2a:** per-field offset constants, any encode or decode,
-  `encoding/binary`, `hash/crc32`, and table-driven tests.
-- **If rusty:** package layout, `const` vs `var`, or how a `_test.go` is shaped
-  are `cask-coach` questions. Ask instead of guessing.
+- **Goal:** given a timestamp, a key length and a value length, the package
+  produces the 18 header bytes in the order and byte order `docs/format.md`
+  specifies. The `crc` field stays as the zero placeholder.
+- **Layout to hit:** `crc` 0–3 (zeros), `tstamp` 4–11, `ksz` 12–13,
+  `value_sz` 14–17, all big-endian.
+- **Carried forward:** `time.Time.UnixMilli` returns a signed `int64`, so it
+  needs an explicit conversion into the u64 field. Lengths need converting into
+  u16/u32 the same way. CRC model (settled 7 Oct): zero placeholder now,
+  computed and filled in by 1.6a.
+- **Exit criterion:** `go test ./...` passes with a test that asserts the
+  returned slice's length equals `HeaderSize` **and** that bytes 12–13 hold
+  the key length passed in (e.g. a 5-byte key gives `00 05`). `go vet` and
+  `gofmt -l` clean.
+- **Look up:** `encoding/binary` (`binary.BigEndian`, `PutUint16`,
+  `PutUint32`, `PutUint64`), `make` with a length, `time.Time.UnixMilli`.
+- **Not in 1.2b:** computing the CRC, key/value bytes, decoding, range checks
+  for lengths that overflow u16/u32 (that is `Put`'s job), asserting the
+  `tstamp` or `value_sz` bytes, and table tests.
+- **First thing to check (repeat rust spot):** the test file name ends in
+  `_test.go`, and the test fails through `t.Error`/`t.Errorf` rather than
+  printing.
 
-**Realistic time:** ~20–25 minutes, and it may run longer because this is the
-first Go after a long gap. Stop at 40 and commit whatever is green.
+**Realistic time:** 20–25 minutes if `encoding/binary` comes quickly, and
+probably more since it is new. At the hard stop, commit whatever is green. A
+version that writes only `ksz` still meets the exit criterion, and the other
+fields become the next step.
 
-Then 1.2b. One per day.
+Then 1.3a. One per day.

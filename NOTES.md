@@ -118,3 +118,37 @@ because this is new-package and test-writing rust after a long gap. Take
 anything half-remembered (package layout, `const`, writing a `_test.go`) to
 `cask-coach` instead of pushing through it. Not in 1.2a: per-field offset
 constants, any encoding, `encoding/binary`, and table tests.
+
+**23 Oct 2026** (Friday, so this was an exception to the reading-only Friday
+rule. 1.2a started Wed 14 Oct; every day from 15 to 22 Oct was skipped)
+Landed: chunk **1.2a** (`c32b9e0`), the first Go since 13 Sep.
+`internal/record/record.go` has an exported untyped `HeaderSize = 18` with a
+doc comment. The comment is still a bit circular; a rewording was offered and
+the owner kept the original, so that is settled. `record_test.go` (package
+`record`) has `TestHeaderSize`, which fails via `t.Error` if the constant is
+not 18. A red check was done. Build/vet/test/gofmt are green. The reviewer
+reviewed an earlier state, and all three of its findings were fixed after that:
+the file name, the missing assertion, and the doc comment. Moving from `Error`
+to `Errorf` with got/want is the owner's call. **Rust spot, second time:** test
+file mechanics. The file was first named `record.test.go`, and the first test
+printed with `fmt.Println` instead of asserting. Both are the 11 Sep
+`docs/go-recall.md` line again, so check the file name and the shape of the
+failure path first in 1.2b. Practical blocker: the DDIA copy on the phone is
+lost, so Friday reading has no material until it is replaced.
+Next: chunk **1.2b**, the first `encoding/binary` in any of the owner's repos,
+so this is new ground. In `internal/record/record.go`, write a function that
+builds a header slice of exactly `HeaderSize` bytes from a timestamp
+(`time.Time`), a key length and a value length. The `crc` bytes (0–3) stay as
+the **zero placeholder**, per the CRC model settled 7 Oct; filling them in is
+1.6a. `tstamp` goes at 4–11, `ksz` at 12–13 and `value_sz` at 14–17, all
+big-endian. **Carried forward:** `time.Time.UnixMilli` returns a signed `int64`,
+so going into the u64 field needs an explicit conversion. The length arguments
+also need converting into the u16/u32 widths. Exit criterion: one test asserts
+the returned length equals `HeaderSize` **and** that bytes 12–13 hold the
+key length you passed in (a 5-byte key gives `00 05`). Look up
+`binary.BigEndian` with `PutUint16`/`PutUint32`/`PutUint64`, `make` for a slice
+of a fixed length, and `time.Time.UnixMilli`. Not in 1.2b: computing the CRC,
+writing key/value bytes, decoding, range checks on lengths that overflow
+u16/u32 (that is `Put`'s job), asserting the `tstamp` or `value_sz` bytes, and
+table tests. Fallback if time runs out: at the hard stop, commit a green version
+that writes `ksz` alone, and the rest becomes the next step.
